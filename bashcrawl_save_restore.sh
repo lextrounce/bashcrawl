@@ -13,12 +13,13 @@ find_bashcrawl_root() {
     return 1
 }
 
-# Save the game state
 save_bashcrawl_game() {
     local savefile="$1"
     if [[ -z "$savefile" ]]; then
-        echo "Usage: save_bashcrawl_game <savefile>"
-        return 1
+        local timestamp
+        timestamp=$(date +%F_%H-%M-%S)
+        savefile="$HOME/bashcrawl_save_$timestamp"
+        echo "No filename provided; using default: $savefile"
     fi
 
     local game_root
@@ -27,12 +28,21 @@ save_bashcrawl_game() {
         return 1
     }
 
-    local basedir="bashcrawl"
+    # Ensure savefile is not inside the bashcrawl tree
+    local save_abs
+    save_abs=$(readlink -f "${savefile}.tar.gz")
+    if [[ "$save_abs" == "$game_root"* ]]; then
+        echo "Error: Save file must not be inside the bashcrawl directory."
+        return 1
+    fi
+
+    local basedir
+    basedir=$(basename "$game_root")
     local parentdir
     parentdir=$(dirname "$game_root")
 
-    # Tar the whole bashcrawl directory from its parent
-    tar -czf "${savefile}.tar.gz" -C "$parentdir" "$basedir" || return 1
+    # Create tarball excluding hidden or backup files (optional: customize)
+    tar --exclude='*.tar.gz' --exclude='*.env' -czf "${savefile}.tar.gz" -C "$parentdir" "$basedir" || return 1
 
     # Save necessary environment variables and current working directory
     {
@@ -44,29 +54,50 @@ save_bashcrawl_game() {
     echo "Game saved as ${savefile}.tar.gz with environment in ${savefile}.env"
 }
 
-# Restore the game state
-load_bashcrawl_game() {
-    local savefile="$1"
-    if [[ -z "$savefile" ]]; then
-        echo "Usage: load_bashcrawl_game <savefile>"
+restore_bashcrawl_game() {
+    local basefile="$1"
+    if [[ -z "$basefile" ]]; then
+        echo "Usage: restore_bashcrawl_game <path/to/savefile (without .tar.gz)>"
         return 1
     fi
 
-    if [[ ! -f "${savefile}.tar.gz" || ! -f "${savefile}.env" ]]; then
-        echo "Missing save files: ${savefile}.tar.gz or ${savefile}.env"
+    local tarfile="${basefile}.tar.gz"
+    local envfile="${basefile}.env"
+
+    if [[ ! -f "$tarfile" ]]; then
+        echo "Error: Archive $tarfile not found."
         return 1
     fi
 
-    # Load the environment
-    source "${savefile}.env"
+    if [[ ! -f "$envfile" ]]; then
+        echo "Warning: Environment file $envfile not found — proceeding without it."
+    fi
 
-    # Restore the directory
-    tar -xzf "${savefile}.tar.gz" -C "$(dirname "$SAVED_PWD")" || return 1
-
-    cd "$SAVED_PWD" || {
-        echo "Warning: Could not change to saved directory $SAVED_PWD"
+    # Extract archive to the current directory (or prompt if unsafe)
+    echo "This will extract the saved game into the current directory:"
+    pwd
+    read -rp "Proceed? [y/N] " confirm
+    [[ "$confirm" =~ ^[Yy]$ ]] || {
+        echo "Aborted."
         return 1
     }
 
-    echo "Restored to $PWD with I=$I, HP=$HP"
+    tar -xzf "$tarfile" || {
+        echo "Error: Failed to extract archive."
+        return 1
+    }
+
+    # Load saved environment variables if available
+    if [[ -f "$envfile" ]]; then
+        # shellcheck disable=SC1090
+        source "$envfile"
+        echo "Environment restored: I=$I, HP=$HP"
+    fi
+
+    if [[ -n "$SAVED_PWD" && -d "$SAVED_PWD" ]]; then
+        cd "$SAVED_PWD" || echo "Warning: Could not return to saved directory."
+    fi
+
+    echo "Game restored successfully."
 }
+
