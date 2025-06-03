@@ -1,5 +1,15 @@
 #!/bin/bash
 
+saveI() {
+    export saveI=$I
+}
+loadI() {
+    export I=$saveI
+}
+getI() {
+    echo $saveI
+}
+
 # Traverse upward to find the 'bashcrawl' directory root
 find_bashcrawl_root() {
     local dir="$PWD"
