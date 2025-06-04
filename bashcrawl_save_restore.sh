@@ -10,6 +10,14 @@ getI() {
     echo $saveI
 }
 
+hint() {
+    if [[ -x ".hint" ]]; then
+        ./.hint
+    else
+        echo "No hint available."
+    fi
+}
+
 # Traverse upward to find the 'bashcrawl' directory root
 find_bashcrawl_root() {
     local dir="$PWD"
