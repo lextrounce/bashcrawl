@@ -1,0 +1,5 @@
+#!/bin/bash
+#
+cat <<EOF
+Have you collected the sword and drunk the potion?
+EOF
