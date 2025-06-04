@@ -2,8 +2,8 @@
 #
 cat <<EOF
 If you just got here coming straight from the entrance collecting treasure and drinking potions:
-echo $I should be:
+echo \$I should be:
 sword,amulet,
-echo $HP should be:
+echo \$HP should be:
 15
 EOF
