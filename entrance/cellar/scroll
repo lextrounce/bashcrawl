@@ -6,17 +6,22 @@
 #
 # From now on, cast your spell like this:
 #
-# ls -F
+# ls -F --color
 #
 # Directories (the rooms of these catacombs) end with a / symbol.
 #
 # Encounters (programs) end with a * symbol.
 #
-# You can avoid having to type `ls -F` every time by running the
+# The --color option gives each a different color
+#
+# You can avoid having to type `ls -F --color` every time by running the
 # following:
 #
-# alias ls='ls -F'
+# alias ls='ls -F --color'
 #
 # This is known as a shell or command alias.  With this alias,
 # typing simply ls by itself will run ls -F. Try it out!
+#
+# To see the current alias use the following command:
+# alias ls
 #
