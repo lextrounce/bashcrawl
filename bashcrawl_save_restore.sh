@@ -24,12 +24,10 @@ find_bashcrawl_root() {
 }
 
 save_bashcrawl_game() {
-    local savefile="$1"
-    if [[ -z "$savefile" ]]; then
-        local timestamp
-        timestamp=$(date +%F_%H-%M-%S)
-        savefile="$HOME/bashcrawl_save_$timestamp"
-        echo "No filename provided; using default: $savefile"
+    local player_name="$1"
+    if [[ -z "$player_name" ]]; then
+        echo "Usage: save_bashcrawl_game <player_name>"
+        return 1
     fi
 
     local game_root
@@ -38,18 +36,12 @@ save_bashcrawl_game() {
         return 1
     }
 
-    # Ensure savefile is not inside the bashcrawl tree
-    local save_abs
-    save_abs=$(readlink -f "${savefile}.tar.gz")
-    if [[ "$save_abs" == "$game_root"* ]]; then
-        echo "Error: Save file must not be inside the bashcrawl directory."
-        return 1
-    fi
-
     local basedir
     basedir=$(basename "$game_root")
     local parentdir
     parentdir=$(dirname "$game_root")
+
+    local savefile="${parentdir}/${player_name}_save_$(date +%F_%H-%M-%S)"
 
     # Create tarball excluding hidden or backup files (optional: customize)
     tar --exclude='*.tar.gz' --exclude='*.env' -czf "${savefile}.tar.gz" -C "$parentdir" "$basedir" || return 1
